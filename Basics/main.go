@@ -12,8 +12,12 @@ import (
 func main() {
 
 	l := log.New(os.Stdout, "product-api", log.LstdFlags)
+
+	//handler
 	hh := handlers.NewHello(l)
 	gh := handlers.NewGoodbye(l)
+
+	//http.Handle("/", hh)
 	sm := http.NewServeMux()
 	sm.Handle("/", hh)
 	sm.Handle("/goodbye", gh)
@@ -24,5 +28,7 @@ func main() {
 		IdleTimeout: 120 * time.Second,
 	}
 	s.ListenAndServe()
+
+	//graceful shutdown
 
 }
