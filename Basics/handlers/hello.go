@@ -19,7 +19,7 @@ func (h *Hello) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	log.Println("Hello, World!")
 	d, err := io.ReadAll(r.Body)
 	if err != nil {
-		http.Error(w, "oops something went wrong!", http.StatusBadRequest)
+		http.Error(w, "oops something went wrong and please check!", http.StatusBadRequest)
 		return
 	}
 	fmt.Fprintf(w, "HEllo, %s!", d)
