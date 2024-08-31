@@ -47,9 +47,12 @@ func (p *ProductsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			p.l.Println("Invalid URL unable to convert to number, id string ")
 			http.Error(w, "Invalid URL", http.StatusBadRequest)
+			return
 		}
 
 		p.l.Println("Got Id", idInt)
+
+		p.updateProduct(idInt, w, r)
 
 	default:
 		w.WriteHeader(http.StatusMethodNotAllowed)
@@ -91,4 +94,24 @@ func (p *ProductsHandler) addProduct(w http.ResponseWriter, r *http.Request) {
 	data.AddProduct(prod)
 
 	w.WriteHeader(http.StatusCreated)
+}
+func (p *ProductsHandler) updateProduct(idInt int, w http.ResponseWriter, r *http.Request) {
+	p.l.Println("Handle Put Product")
+
+	prod := &data.Product{}
+
+	err := prod.FromJSON(r.Body)
+	if err != nil {
+		http.Error(w, "Unable to Marshal the Json ", http.StatusInternalServerError)
+		return
+	}
+	err = data.UpdateProduct(idInt, prod)
+	if err == data.ErrProductNotFound {
+		http.Error(w, "Product Not Found", http.StatusNotFound)
+		return
+	}
+	if err != nil {
+		http.Error(w, "Product not found", http.StatusInternalServerError)
+		return
+	}
 }
