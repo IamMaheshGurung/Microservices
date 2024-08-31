@@ -6,6 +6,8 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"regexp"
+	"strconv"
 
 	"example.com/m/data"
 )
@@ -25,6 +27,30 @@ func (p *ProductsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		p.getProducts(w, r)
 	case http.MethodPost:
 		p.addProduct(w, r)
+	case http.MethodPut:
+		reg := regexp.MustCompile(`/([0-9]+)`)
+		g := reg.FindAllStringSubmatch(r.URL.Path, -1)
+		p.l.Println("Captured groups: ", g)
+		if len(g) != 1 {
+			p.l.Println("Invalid Id more than one url")
+			http.Error(w, "Invalid URL", http.StatusBadRequest)
+		}
+
+		if len(g[0]) != 2 {
+			p.l.Println("More than one capture")
+			http.Error(w, "Invalid URL", http.StatusBadRequest)
+			return
+		}
+
+		idString := g[0][1]
+		idInt, err := strconv.Atoi(idString)
+		if err != nil {
+			p.l.Println("Invalid URL unable to convert to number, id string ")
+			http.Error(w, "Invalid URL", http.StatusBadRequest)
+		}
+
+		p.l.Println("Got Id", idInt)
+
 	default:
 		w.WriteHeader(http.StatusMethodNotAllowed)
 	}
@@ -62,6 +88,7 @@ func (p *ProductsHandler) addProduct(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	p.l.Printf("Product: %#v", prod)
+	data.AddProduct(prod)
 
 	w.WriteHeader(http.StatusCreated)
 }

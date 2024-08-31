@@ -8,41 +8,41 @@ import (
 	"os/signal"
 	"time"
 
-	"github.com/IamMaheshGurung/Microservices.git/TRAILER/handlers"
+	"xample.com/m/handlers"
 )
 
 func main() {
+	lg := log.New(os.Stdout, "Course-Api", log.LstdFlags)
 
-	pl := log.New(os.Stdout, "courses-api", log.LstdFlags)
-	hh := handlers.NewProductHandler(pl)
-	sm := http.NewServeMux()
-	sm.Handle("/", hh)
+	hg := handlers.NewCourse(lg)
+
+	mux := http.NewServeMux()
+
+	mux.Handle("/", hg)
 
 	server := http.Server{
 		Addr:        ":9090",
-		Handler:     sm,
-		IdleTimeout: 130 * time.Second,
+		Handler:     mux,
+		IdleTimeout: 120 * time.Second,
 	}
 	go func() {
-		pl.Printf("Server starting at localhost:9090")
+		lg.Println("Server startng now at local host 9090:")
 		err := server.ListenAndServe()
 		if err != nil {
-			pl.Printf("Error at serving in local host")
-			os.Exit(1)
+			log.Println("Unable to connect Server")
 		}
 	}()
 
-	//For GraceFul Shutdown
+	//GraceFul shutdown
 
 	sigChan := make(chan os.Signal, 1)
-	signal.Notify(sigChan, os.Interrupt)
 	signal.Notify(sigChan, os.Kill)
+	signal.Notify(sigChan, os.Interrupt)
+	sg := <-sigChan
+	lg.Println("Requested for the graceful shutdown: ", sg)
 
-	sig := <-sigChan
-
-	pl.Printf("Requeestd for Gracful Termination %s", sig)
-
-	tc, _ := context.WithTimeout(context.Background(), 30*time.Second)
+	tc, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
 	server.Shutdown(tc)
 
 }

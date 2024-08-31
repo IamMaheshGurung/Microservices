@@ -28,6 +28,18 @@ func GetProducts() []*Product {
 	return productList
 }
 
+func AddProduct(p *Product) {
+	p.ID = getNextID()
+	productList = append(productList, p)
+
+}
+
+func getNextID() int {
+	lp := productList[len(productList)-1]
+	lp.ID++
+	return lp.ID
+}
+
 // A sample product list with unique IDs
 var productList = []*Product{
 	{
