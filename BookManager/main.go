@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/rs/cors"
 	"xample.com/m/handlers"
 )
 
@@ -20,16 +21,24 @@ func main() {
 	bh := handlers.NewBook(l)
 
 	router := mux.NewRouter()
-
+	fs := http.FileServer(http.Dir("./static/"))
+	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", fs))
 	router.HandleFunc("/book", bh.GetBook).Methods(http.MethodGet)
 	router.HandleFunc("/book/{id}", bh.GetBookId).Methods(http.MethodGet)
 	router.HandleFunc("/book", bh.CreateBook).Methods(http.MethodPost)
 	router.HandleFunc("/book/{id}", bh.UpdateBook).Methods(http.MethodPut)
 	router.HandleFunc("/book/{id}", bh.DeleteBook).Methods(http.MethodDelete)
 
+	c := cors.New(cors.Options{
+		AllowedOrigins:   []string{"*"},
+		AllowedMethods:   []string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodDelete},
+		AllowedHeaders:   []string{"Content-Type"},
+		AllowCredentials: true,
+	})
+
 	server := &http.Server{
 		Addr:        ":8080",
-		Handler:     router,
+		Handler:     c.Handler(router),
 		IdleTimeout: 120 * time.Second,
 	}
 

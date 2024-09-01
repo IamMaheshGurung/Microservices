@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Book Management</title>
+        
+    </head>
+    <body>
+        <h1>Book Management</h1>
+        <h2>Add a Book</h2>
+        <form id="addBookForm">
+            <input type="text" id="name" placeholder="Name" required>
+            <input type="text" id="description" placeholder="Description" required>
+            <button type="submit">Add Book</button>            
+        </form>
+        <h2>Book List</h2>
+        <ul id="bookList"></ul>
+        <script>
+            const apiUrl ="http://localhost:8080/book";
+
+            //fetching and displaying the data
+
+            function fetchBook(){
+                fetch(apiUrl)
+                .then(response=> response.json())
+                .then(data =>{
+                    const bookList = document.getElementById('bookList');
+                    bookList.innerHTML=""
+                    data.forEach(book => {
+                        const li = document.createElement('li');
+                        li.innerHTML = `${book.name} by ${book.description} 
+                        <button onclick="deleteBook(${book.id})">Delete</button>
+                        <button onclick="updateBook(${book.id})">Update</button>`;
+                        bookList.appendChild(li);
+                    });
+                })
+                .catch(error => {
+                    console.error("Error fetching books", error);
+                });
+            }
+            //Adding a new Book
+
+            document.getElementById('addBookForm').addEventListener('submit', function(e){
+                e.preventDefault();
+                const name = document.getElementById('name').value;
+                const description = document.getElementById('description').value;
+                fetch(apiUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type':'application/json'
+                    },
+                    body: JSON.stringify({name, description})
+                }).then(()=>fetchBook())
+                .catch(error => {
+                    console.error("Error Adding Book", error)
+                });
+                
+            });
+
+            //DElete Books
+            function deleteBook(id){
+                fetch(`${apiUrl}/${id}`,{
+                    method: 'DELETE',
+
+                }).then(()=>fetchBook());
+            }
+
+            //Update Books
+
+            function updateBook(id){
+                const newTitle = prompt("ENter new title: ");
+                const newAuthor = prompt ("Enter the author name: ");
+                fetch(`${apiUrl}/${id}`,{
+                    method:'PUT',
+                    headers: {
+                         'Content-Type':'application/json'
+                         },
+                    body: JSON.stringify({title : newTitle, author : newAuthor})
+                }).then(() => fetchBook());
+            }
+            fetchBook();
+            </script>
+    </body>
+</html>
