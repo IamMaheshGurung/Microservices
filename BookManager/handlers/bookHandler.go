@@ -11,11 +11,11 @@ import (
 )
 
 type BookHandler struct {
-	l *log.Logger
+	L *log.Logger
 }
 
 func NewBook(l *log.Logger) *BookHandler {
-	return &BookHandler{l: l}
+	return &BookHandler{l}
 }
 
 func (b *BookHandler) GetBook(w http.ResponseWriter, r *http.Request) {

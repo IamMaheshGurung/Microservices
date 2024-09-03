@@ -19,7 +19,6 @@ func main() {
 	l := log.New(os.Stdout, "Books-api", log.LstdFlags)
 
 	bh := handlers.NewBook(l)
-
 	router := mux.NewRouter()
 	fs := http.FileServer(http.Dir("./static/"))
 	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", fs))
