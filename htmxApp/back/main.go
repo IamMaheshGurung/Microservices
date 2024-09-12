@@ -1,28 +1,47 @@
 package main
 
 import (
+	"context"
+	"log"
 	"net/http"
-	"text/template"
+	"os"
+	"os/signal"
+	"time"
+
+	"example.com/back/handlers"
+	"github.com/gorilla/mux"
 )
 
 func main() {
-	http.HandleFunc("/", Homepage)
-	http.ListenAndServe(":8080", nil)
-}
 
-func Homepage(w http.ResponseWriter, r *http.Request) {
-	tmpl, err := template.ParseFiles("../front/index.html")
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	r := mux.NewRouter()
+	r.Handle("/", http.StripPrefix("/", http.FileServer(http.Dir("../front"))))
+	r.HandleFunc("/message", handlers.GetMessage).Methods(http.MethodGet)
+	r.HandleFunc("/submit", handlers.Submithandler).Methods(http.MethodPost)
 
-	data := struct {
-		Title   string
-		Message string
-	}{
-		Title:   "htmx app",
-		Message: "I am from golang",
+	server := http.Server{
+		Addr:        ":8080",
+		Handler:     r,
+		IdleTimeout: 120 * time.Second,
 	}
-	tmpl.Execute(w, data)
+	go func() {
+		log.Println("Running at local host")
+		if err := server.ListenAndServe(); err != nil {
+			println("Server Error,", err.Error())
+		}
+	}()
+
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, os.Interrupt)
+
+	<-stop
+	log.Println("Shutting down the server")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	if err := server.Shutdown(ctx); err != nil {
+		log.Fatalf("server forced to shutdown %s", err)
+	}
+	log.Println("Gracefully shutdown")
 }
