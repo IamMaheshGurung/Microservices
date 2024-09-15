@@ -3,19 +3,17 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"os/signal"
+	"text/template"
 	"time"
 )
 
 func main() {
+
 	router := http.NewServeMux()
-	home := http.HandlerFunc(handler)
-	form := http.HandlerFunc(formHandler)
-	router.Handle("/", home)
-	router.Handle("/form", form)
+	router.HandleFunc("/", handler)
 
 	server := http.Server{
 		Addr:        ":8080",
@@ -24,56 +22,43 @@ func main() {
 	}
 
 	go func() {
-		fmt.Println("Local host running at :8080")
-		err := server.ListenAndServe()
-		if err != nil {
-			log.Printf("Server Error:%v", err)
+		fmt.Println("Server running locally")
+		if err := server.ListenAndServe(); err != nil {
+			fmt.Printf("Server error %v\n", err)
 		}
 	}()
 
-	sig := make(chan os.Signal, 1)
-	signal.Notify(sig, os.Interrupt)
-	<-sig
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, os.Interrupt)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
+	<-stop
 
-	println("Gracefully shutting down the server")
+	ctx, Cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer Cancel()
 
-	err := server.Shutdown(ctx)
-	if err != nil {
-		log.Printf("SHutdown due to %v", err)
-
+	fmt.Println("Shutting down the server....")
+	if err := server.Shutdown(ctx); err != nil {
+		fmt.Printf("Server shutdown error %v\n", err)
 	}
+	fmt.Println("Server shut down gracefully.....")
 
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodGet {
-		_, err := fmt.Println("Hi Everyone I am the homepage")
+		tmpl, err := template.ParseFiles("index.html", "nav.html", "home.html", "form.html")
 		if err != nil {
-			http.Error(w, "Unable to get the webpage", http.StatusBadRequest)
+			http.Error(w, "Unable to load the template", http.StatusInternalServerError)
+			fmt.Printf("%v\n", err)
+
+			return
 		}
-
-	}
-	http.Error(w, "Unable to get the webpage", http.StatusBadRequest)
-
-}
-
-func formHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method == http.MethodPost {
-		err := r.ParseForm()
+		err = tmpl.Execute(w, nil)
 		if err != nil {
-			http.Error(w, "unable to parse form", http.StatusBadRequest)
+			http.Error(w, "Unable to execute template", http.StatusInternalServerError)
+			fmt.Printf("%v\n", err)
+
 		}
-
-		name := r.FormValue("name")
-		email := r.FormValue("email")
-
-		response := fmt.Sprintf("Data Received %s as name and %s as email", name, email)
-		fmt.Fprintln(w, response)
-	} else {
-		http.Error(w, "Incorrect request method", http.StatusBadRequest)
 	}
 
 }
