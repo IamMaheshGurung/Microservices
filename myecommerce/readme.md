@@ -1,0 +1,79 @@
+organic-village-dairy-ecommerce/
+├── backend/                           # Backend services (Microservices)
+│   ├── auth-service/                  # Authentication service
+│   │   ├── cmd/                       # Entry point for the service
+│   │   │   └── main.go                # main entry file for auth service
+│   │   ├── config/                    # Configuration files (e.g., environment variables)
+│   │   │   └── config.go              # Configuration setup
+│   │   ├── handler/                   # HTTP request handlers (routes)
+│   │   │   └── auth_handler.go        # Handlers for user login/signup
+│   │   ├── model/                     # Data models (user model)
+│   │   │   └── user.go                # User model and validation
+│   │   ├── repository/                # Data repositories (database interactions)
+│   │   │   └── user_repository.go     # DB interactions for users
+│   │   ├── service/                   # Business logic for authentication
+│   │   │   └── auth_service.go        # Auth service methods
+│   │   └── Dockerfile                 # Dockerfile for auth service
+│   ├── product-service/               # Product service
+│   │   ├── cmd/                       # Entry point for product service
+│   │   │   └── main.go                # Main entry file for product service
+│   │   ├── handler/                   # HTTP request handlers for products
+│   │   │   └── product_handler.go     # Handlers for product CRUD
+│   │   ├── model/                     # Data models for products
+│   │   │   └── product.go             # Product model (name, price, etc.)
+│   │   ├── repository/                # DB interactions for products
+│   │   │   └── product_repository.go  # Product database interactions
+│   │   ├── service/                   # Business logic for product handling
+│   │   │   └── product_service.go     # Product-related logic
+│   │   └── Dockerfile                 # Dockerfile for product service
+│   ├── order-service/                 # Order service
+│   │   ├── cmd/                       # Entry point for order service
+│   │   │   └── main.go                # Main entry file for order service
+│   │   ├── handler/                   # HTTP request handlers for orders
+│   │   │   └── order_handler.go       # Order-related handlers
+│   │   ├── model/                     # Data models for orders
+│   │   │   └── order.go               # Order model (product list, user info, etc.)
+│   │   ├── repository/                # DB interactions for orders
+│   │   │   └── order_repository.go    # Order database interactions
+│   │   ├── service/                   # Business logic for orders
+│   │   │   └── order_service.go       # Order-related logic
+│   │   └── Dockerfile                 # Dockerfile for order service
+│   ├── payment-service/               # Payment service
+│   │   ├── cmd/                       # Entry point for payment service
+│   │   │   └── main.go                # Main entry file for payment service
+│   │   ├── service/                   # Payment processing business logic
+│   │   │   └── payment_service.go     # Payment handling logic (third-party integration)
+│   │   └── Dockerfile                 # Dockerfile for payment service
+│   └── docker-compose.yml             # Docker Compose file to orchestrate all services
+├── frontend/                          # Frontend code (HTMX-based)
+│   ├── templates/                     # HTML templates
+│   │   ├── index.html                 # Homepage with product list
+│   │   ├── product_detail.html        # Product details page
+│   │   ├── cart.html                  # Shopping cart page
+│   │   └── checkout.html              # Checkout page
+│   ├── static/                        # Static files (CSS, JS, images)
+│   │   ├── css/                       # Stylesheets
+│   │   │   └── styles.css             # Main stylesheet
+│   │   ├── js/                        # JavaScript files
+│   │   │   └── app.js                 # Frontend JS (e.g., HTMX initialization)
+│   │   └── images/                    # Product images and other media
+│   ├── htmx/                          # HTMX integration
+│   │   ├── product-card.htmx          # HTMX component for displaying product cards
+│   │   ├── cart-update.htmx           # HTMX for cart updates (add/remove items)
+│   │   └── order-summary.htmx         # HTMX for updating order summary
+├── database/                          # Database initialization scripts
+│   ├── migrations/                    # DB migration files
+│   │   └── create_tables.sql          # SQL for setting up tables
+│   └── seed_data.sql                  # Sample data for seeding the DB
+├── docs/                               # Documentation files
+│   ├── architecture.md                # Microservices architecture details
+│   ├── api_docs.md                    # API documentation for services
+│   └── setup_guide.md                 # Setup and configuration guide
+├── scripts/                            # Helper scripts (e.g., database setup)
+│   ├── init_db.sh                     # Script to initialize DB with migrations
+│   └── generate_docker_images.sh      # Script for building Docker images for services
+├── .env.example                       # Example environment variables configuration
+├── .gitignore                         # Git ignore file
+├── README.md                          # Project overview and instructions
+└── LICENSE                             # License information
+
