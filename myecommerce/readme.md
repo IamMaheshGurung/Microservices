@@ -1,24 +1,41 @@
-ecommerce-app/
-│
-├── frontend/                 # HTMX-based frontend
-│   ├── templates/            # HTML templates (product listing, cart)
-│   ├── static/               # Static assets (CSS, images, JS)
-│   └── main.go               # Go code to serve frontend and interact with APIs
-│
-├── product-service/          # Product microservice
-│   ├── main.go               # Go code to handle product-related logic
-│   ├── go.mod                # Go module file for product service
-│
-├── cart-service/             # Cart microservice
-│   ├── main.go               # Go code to handle cart-related logic
-│   ├── go.mod                # Go module file for cart service
-│
-├── order-service/            # Order microservice
-│   ├── main.go               # Go code to handle order-related logic
-│   ├── go.mod                # Go module file for order service
-│
-├── api-gateway/              # API Gateway (Optional)
-│   ├── main.go               # Go code for routing requests to services
-│   ├── go.mod                # Go module file for API Gateway
-│
+
+/dairy-shop
+├── /cmd
+│   ├── /user-service
+│   │   └── main.go
+│   ├── /product-service
+│   │   └── main.go
+│   └── /order-service
+│       └── main.go
+├── /services
+│   ├── /user-service
+│   │   ├── user_service.go
+│   │   ├── user_handler.go
+│   │   └── user_model.go
+│   ├── /product-service
+│   │   ├── product_service.go
+│   │   ├── product_handler.go
+│   │   └── product_model.go
+│   ├── /order-service
+│   │   ├── order_service.go
+│   │   ├── order_handler.go
+│   │   └── order_model.go
+├── /frontend
+│   ├── /static
+│   │   ├── style.css
+│   │   └── script.js
+│   ├── /templates
+│   │   ├── register.html
+│   │   ├── otp_verification.html
+│   │   └── product_list.html
+│   └── /handlers
+│       └── user_handlers.go
+├── /config
+│   ├── config.go
+│   └── db_config.json
+├── /test
+│   ├── /product-service_test.go
+│   ├── /order-service_test.go
+│   └── /user-service_test.go
+└── README.md
 

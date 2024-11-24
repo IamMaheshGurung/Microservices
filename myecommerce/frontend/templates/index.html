@@ -1,68 +1,234 @@
+
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>eCommerce</title>
+    <title>Sagarmatha Sarara</title>
     <style>
         body {
             font-family: Arial, sans-serif;
             background-color: #f4f4f4;
             margin: 0;
             padding: 0;
+            display: flex;
         }
 
         header {
             background-color: #333;
             color: white;
-            padding: 10px 20px;
+            padding: 20px;
             text-align: center;
+            width: 100%;
         }
 
         header h1 {
             margin: 0;
         }
 
+        nav {
+            margin-top: 10px;
+        }
+
         nav a {
             margin: 0 15px;
             color: white;
             text-decoration: none;
+            font-size: 16px;
         }
 
-        main {
+        nav a:hover {
+            text-decoration: underline;
+        }
+
+        .container {
+            display: flex;
+            flex: 1;
+        }
+
+        .product-section {
+            flex: 3;
             padding: 20px;
+            background-color: #ffffff;
         }
 
-        button {
+        .login-section {
+            flex: 1;
+            background-color: #333;
+            color: white;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: center;
+        }
+
+        .login-section form {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            width: 100%;
+        }
+
+        .login-section input,
+        .login-section button {
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            margin-bottom: 10px;
+        }
+
+        .login-section button {
             background-color: #28a745;
             color: white;
-            padding: 10px 20px;
-            border: none;
             cursor: pointer;
         }
 
-        button:hover {
+        .login-section button:hover {
             background-color: #218838;
+        }
+
+        .toggle-link {
+            color: #28a745;
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        .toggle-link:hover {
+            text-decoration: underline;
+        }
+
+        .product-card {
+            border: 1px solid #ddd;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            margin-bottom: 20px;
+            background-color: #fff;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .product-card img {
+            width: 100%;
+            height: auto;
+            max-width: 200px;
+            margin-bottom: 10px;
+        }
+
+        .product-card h3 {
+            font-size: 18px;
+            margin: 10px 0;
+        }
+
+        .product-card p {
+            color: #555;
+        }
+
+        #products {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        footer {
+            background-color: #333;
+            color: white;
+            text-align: center;
+            padding: 10px;
+            position: fixed;
+            width: 100%;
+            bottom: 0;
+        }
+
+        #forgot-password-form {
+            display: none;
+        }
+
+        #otp-container {
+            margin-top: 20px;
         }
     </style>
 </head>
 <body>
     <header>
-        <h1>Welcome to Our eCommerce Store</h1>
+        <h1>Sagarmatha Sarara</h1>
         <nav>
             <a href="/">Home</a>
             <a href="/cart">Cart</a>
         </nav>
     </header>
     
-    <main>
-        <section id="product-list">
+    <div class="container">
+        <!-- Product Section -->
+        <div class="product-section">
             <h2>Our Products</h2>
             <div id="products" hx-get="/product" hx-trigger="load">
-                <!--products-->
+                <!-- Products will appear here -->
             </div>
-        </section>
-    </main>
+        </div>
+
+        <!-- Login/Signup Section -->
+        <div class="login-section">
+            <h3 id="login-title">Login</h3>
+            <form id="login-form" hx-post="/login" hx-target="#login-response" hx-swap="outerHTML">
+                <input type="email" name="email" placeholder="Email" required>
+                <input type="password" name="password" placeholder="Password" required>
+                <button type="submit">Login</button>
+            </form>
+            <div>
+                <a href="#" class="toggle-link" id="switch-to-signup">Don't have an account? Signup</a>
+                <br>
+                <a href="#" class="toggle-link" id="forgot-password-link">Forgot Password?</a>
+            </div>
+            <div id="login-response"></div>
+
+            <!-- Forgot Password Form -->
+            <form id="forgot-password-form" hx-post="/forgot-password" hx-target="#forgot-password-response" hx-swap="outerHTML">
+                <input type="email" name="email" placeholder="Enter your email to reset password" required>
+                <button type="submit">Send Reset Link</button>
+            </form>
+            <div id="forgot-password-response"></div>
+
+            <!-- Signup Form (initially hidden) -->
+            <form id="signup-form" hx-post="/register" hx-target="#otp-container" style="display: none;">
+                <label for="name">Full Name:</label>
+                <input type="text" id="name" name="name" required placeholder="Enter your full name">
+                
+                <label for="mobile">Mobile Number:</label>
+                <input type="text" id="mobile" name="mobile" required placeholder="Enter your mobile number">
+                <input type="password" name="password" placeholder="Password" required>
+
+                
+                <button type="submit">Register</button>
+            </form>
+            <div id="otp-container"></div>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2024 Sagarmatha Sarara | All Rights Reserved</p>
+    </footer>
+
+    <script>
+        // Toggle between login and signup forms
+        document.getElementById('switch-to-signup').addEventListener('click', function(e) {
+            e.preventDefault();  // Prevent the default link behavior
+            document.getElementById('login-form').style.display = 'none';
+            document.getElementById('login-title').textContent = 'Signup';
+            document.getElementById('signup-form').style.display = 'block';
+            document.getElementById('switch-to-signup').textContent = 'Already have an account? Login';
+        });
+
+        // Toggle between login and forgot password forms
+        document.getElementById('forgot-password-link').addEventListener('click', function(e) {
+            e.preventDefault();  // Prevent the default link behavior
+            document.getElementById('forgot-password-form').style.display = 'block';
+            document.getElementById('login-form').style.display = 'none';
+            document.getElementById('forgot-password-link').style.display = 'none';
+        });
+    </script>
 </body>
 </html>
 
