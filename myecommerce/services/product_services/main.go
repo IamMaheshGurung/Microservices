@@ -3,7 +3,7 @@ package main
 
 
 import(
-    "fmt"
+   "product_service/routes" 
     "log"
     "net/http"
 

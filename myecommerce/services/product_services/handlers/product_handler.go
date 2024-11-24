@@ -24,7 +24,7 @@ func GetProducts(w http.ResponseWriter, r * http.Request) {
 
 
 func GetProductByName(w http.ResponseWriter,r* http.Request) {
-    name := mux.vars(r) ["name"]
+    name := mux.Vars(r) ["name"]
 
     product, err := models.GetProductByName(name)
 
@@ -41,7 +41,7 @@ func GetProductByName(w http.ResponseWriter,r* http.Request) {
 func CreateProduct( w http.ResponseWriter, r * http.Request){
     var product models.Product
 
-    json.NewDecoder(r.Body).Decode(product)
+    json.NewDecoder(r.Body).Decode(&product)
     err := models.CreateProduct(product)
     if err != nil {
         http.Error(w, "failed to create the product", http.StatusInternalServerError)
@@ -56,7 +56,7 @@ func UpdateProduct( w http.ResponseWriter, r * http.Request) {
 
     var product models.Product
 
-    json.NewDecoder(r.Body).Decode(product)
+    json.NewDecoder(r.Body).Decode(&product)
     err := models.UpdateProduct(name, product)
     if err != nil{
         http.Error(w, "Failed to update the product", http.StatusInternalServerError)
