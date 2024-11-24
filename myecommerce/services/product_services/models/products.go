@@ -74,3 +74,16 @@ func UpdateProduct(name string, updatedProduct Product) error {
 
 
 
+func DeleteProduct(name string) error {
+    result := db.First(&product, "name = ? ", name)
+    
+    if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+        return errors.New("product not found")
+        }
+    
+    return db.Delete(&product).Error
+}
+
+
+
+
