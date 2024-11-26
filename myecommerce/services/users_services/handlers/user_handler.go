@@ -1,20 +1,14 @@
-package handler
 
+package handlers
 
-
-
-import(
+import (
     "fmt"
+    "log"
     "golang.org/x/crypto/bcrypt"
     "errors"
     "gorm.io/gorm"
     "userService/models"
-    "log"
-    
-
 )
-
-
 
 type UserService struct {
     db *gorm.DB
@@ -24,99 +18,94 @@ func NewUserService(db *gorm.DB) *UserService {
     return &UserService{db: db}
 }
 
-
-func (s *UserService) CreateUser(username, phonenumber, password string) (*models.User, error){
-
+// CreateUser creates a new user and returns the user object.
+func (s *UserService) CreateUser(username, phonenumber, password string) (*models.User, error) {
     var existingUser models.User
 
-
-    if err := s.db.Where("phone_number =?", phonenumber).First(&existingUser).Error; err != nil {
-        return nil, errors.New("Username or mobile has been already register, try direct logging")
+    // Check if phone number already exists
+    if err := s.db.Where("phone_number = ?", phonenumber).First(&existingUser).Error; err == nil {
+        return nil, errors.New("phone number is already registered")
     }
 
-
-    if err := s.db.Where("username =?", username).First(&existingUser).Error; err != nil {
-        return nil, errors.New("Username or mobile has been already register, try another username")
+    // Check if username already exists
+    if err := s.db.Where("username = ?", username).First(&existingUser).Error; err == nil {
+        return nil, errors.New("username is already taken, try another one")
     }
 
+    // Hash the password
     hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
     if err != nil {
-           log.Printf("Unable to get the hashed paswword")
-            
-       }
-       
+        log.Printf("Unable to hash the password: %v", err)
+        return nil, errors.New("unable to process password")
+    }
 
-
-    newPassword := string(hashedPassword)
-    
-
-    user := models.User {
-        Username: username,
+    // Create the new user object
+    user := models.User{
+        Username:    username,
         PhoneNumber: phonenumber,
-        Password: newPassword,
+        Password:    string(hashedPassword), // Store the hashed password
     }
 
-
+    // Save the new user to the database
     if err := s.db.Create(&user).Error; err != nil {
-        return nil, err
+        return nil, fmt.Errorf("failed to create user: %v", err)
     }
 
-    return &user, nil 
+    return &user, nil
 }
 
+// GetUser retrieves a user by ID.
 func (s *UserService) GetUser(id int) (*models.User, error) {
-    var user models.User 
+    var user models.User
     if err := s.db.First(&user, id).Error; err != nil {
-        return nil, fmt.Errorf("User with ID %d not found", id)
+        return nil, fmt.Errorf("user with ID %d not found", id)
     }
-    return &user, nil 
+    return &user, nil
 }
 
-
+// UpdateUser updates an existing user's information.
 func (s *UserService) UpdateUser(id int, username, phoneNumber, password string) (*models.User, error) {
-    var user models.User 
+    var user models.User
 
-
+    // Check if the user exists
     if err := s.db.First(&user, id).Error; err != nil {
-        return nil, fmt.Errorf("user id %d not found or some error", id)
+        return nil, fmt.Errorf("user with ID %d not found", id)
     }
 
+    // Ensure the new phone number is unique
     var existingUser models.User
-
-    
-    if err := s.db.Where("phone_number = ? AND id != ?", phoneNumber, id).First(&existingUser).Error; err != nil {
-        return nil, errors.New("Phone number already in use")
+    if err := s.db.Where("phone_number = ? AND id != ?", phoneNumber, id).First(&existingUser).Error; err == nil {
+        return nil, errors.New("phone number already in use")
     }
 
-     hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-    if err != nil {
-           log.Printf("Unable to get the hashed paswword")
-            
-       }
-       
+    // Hash the password if it's provided
+    if password != "" {
+        hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+        if err != nil {
+            log.Printf("Unable to hash the password: %v", err)
+            return nil, errors.New("unable to process password")
+        }
+        user.Password = string(hashedPassword) // Update the password
+    }
 
+    // Update the other fields
+    user.Username = username
+    user.PhoneNumber = phoneNumber
 
-    newPassword := string(hashedPassword)
-    
+    // Save the updated user to the database
+    if err := s.db.Save(&user).Error; err != nil {
+        return nil, fmt.Errorf("failed to update user: %v", err)
+    }
 
-            user.Username = username
-            user.PhoneNumber = phoneNumber
-            user.Password = newPassword
-
-
-
-            if err := s.db.Save(&user).Error; err != nil {
-                return nil, err 
-            }
-            return &user, nil 
+    return &user, nil
 }
 
-
-func(s *UserService) DeleteUser(id int) error {
+// DeleteUser deletes a user by ID.
+func (s *UserService) DeleteUser(id int) error {
+    // Try to delete the user
     if err := s.db.Delete(&models.User{}, id).Error; err != nil {
-        return fmt.Errorf("user with ID %d not found", id)
+        return fmt.Errorf("failed to delete user with ID %d: %v", id, err)
     }
-    return nil 
+    return nil
 }
-
 
