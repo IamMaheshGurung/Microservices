@@ -2,14 +2,15 @@
 package handlers
 
 import (
-    "fmt"
+    "encoding/json"
+    "net/http"
+    "github.com/gorilla/mux"
     "log"
-    "golang.org/x/crypto/bcrypt"
-    "errors"
     "gorm.io/gorm"
     "userService/models"
+    "golang.org/x/crypto/bcrypt"
+    "fmt"
 )
-
 type UserService struct {
     db *gorm.DB
 }
@@ -18,94 +19,107 @@ func NewUserService(db *gorm.DB) *UserService {
     return &UserService{db: db}
 }
 
-// CreateUser creates a new user and returns the user object.
-func (s *UserService) CreateUser(username, phonenumber, password string) (*models.User, error) {
-    var existingUser models.User
 
-    // Check if phone number already exists
-    if err := s.db.Where("phone_number = ?", phonenumber).First(&existingUser).Error; err == nil {
-        return nil, errors.New("phone number is already registered")
+func (s *UserService) CreateUser(w http.ResponseWriter, r *http.Request) {
+    var newUser models.User
+
+    // Parse the incoming request JSON into the newUser struct
+    if err := json.NewDecoder(r.Body).Decode(&newUser); err != nil {
+        http.Error(w, "Invalid input", http.StatusBadRequest)
+        return
     }
 
-    // Check if username already exists
-    if err := s.db.Where("username = ?", username).First(&existingUser).Error; err == nil {
-        return nil, errors.New("username is already taken, try another one")
+    // Validate phone number and username
+    var existingUser models.User
+
+    if err := s.db.Where("phone_number = ?", newUser.PhoneNumber).First(&existingUser).Error; err == nil {
+        http.Error(w, "Phone number is already registered", http.StatusConflict)
+        return
+    }
+
+    if err := s.db.Where("username = ?", newUser.Username).First(&existingUser).Error; err == nil {
+        http.Error(w, "Username is already taken, try another one", http.StatusConflict)
+        return
     }
 
     // Hash the password
-    hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+    hashedPassword, err := bcrypt.GenerateFromPassword([]byte(newUser.Password), bcrypt.DefaultCost)
     if err != nil {
         log.Printf("Unable to hash the password: %v", err)
-        return nil, errors.New("unable to process password")
+        http.Error(w, "Unable to process password", http.StatusInternalServerError)
+        return
     }
-
-    // Create the new user object
-    user := models.User{
-        Username:    username,
-        PhoneNumber: phonenumber,
-        Password:    string(hashedPassword), // Store the hashed password
-    }
+    newUser.Password = string(hashedPassword)
 
     // Save the new user to the database
-    if err := s.db.Create(&user).Error; err != nil {
-        return nil, fmt.Errorf("failed to create user: %v", err)
+    if err := s.db.Create(&newUser).Error; err != nil {
+        http.Error(w, fmt.Sprintf("Failed to create user: %v", err), http.StatusInternalServerError)
+        return
     }
 
-    return &user, nil
+    // Respond with the created user as a JSON response
+    w.Header().Set("Content-Type", "application/json")
+    w.WriteHeader(http.StatusCreated)
+    json.NewEncoder(w).Encode(newUser)
 }
 
-// GetUser retrieves a user by ID.
-func (s *UserService) GetUser(id int) (*models.User, error) {
+
+//for getting user
+
+func (s *UserService) GetUser(w http.ResponseWriter, r *http.Request) {
+    id := mux.Vars(r)["id"] 
     var user models.User
+
     if err := s.db.First(&user, id).Error; err != nil {
-        return nil, fmt.Errorf("user with ID %d not found", id)
+        http.Error(w, fmt.Sprintf("User with ID %s not found", id), http.StatusNotFound)
+        return
     }
-    return &user, nil
+
+    // Respond with the user in JSON format
+    w.Header().Set("Content-Type", "application/json")
+    json.NewEncoder(w).Encode(user)
 }
 
-// UpdateUser updates an existing user's information.
-func (s *UserService) UpdateUser(id int, username, phoneNumber, password string) (*models.User, error) {
+//for updating the user
+
+func (s *UserService) UpdateUser(w http.ResponseWriter, r *http.Request) {
+    id := mux.Vars(r)["id"]
     var user models.User
 
-    // Check if the user exists
     if err := s.db.First(&user, id).Error; err != nil {
-        return nil, fmt.Errorf("user with ID %d not found", id)
+        http.Error(w, fmt.Sprintf("User with ID %s not found", id), http.StatusNotFound)
+        return
     }
 
-    // Ensure the new phone number is unique
-    var existingUser models.User
-    if err := s.db.Where("phone_number = ? AND id != ?", phoneNumber, id).First(&existingUser).Error; err == nil {
-        return nil, errors.New("phone number already in use")
+    // Update user data
+    if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
+        http.Error(w, "Invalid input", http.StatusBadRequest)
+        return
     }
 
-    // Hash the password if it's provided
-    if password != "" {
-        hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-        if err != nil {
-            log.Printf("Unable to hash the password: %v", err)
-            return nil, errors.New("unable to process password")
-        }
-        user.Password = string(hashedPassword) // Update the password
-    }
-
-    // Update the other fields
-    user.Username = username
-    user.PhoneNumber = phoneNumber
-
-    // Save the updated user to the database
+    // Save the updated user
     if err := s.db.Save(&user).Error; err != nil {
-        return nil, fmt.Errorf("failed to update user: %v", err)
+        http.Error(w, fmt.Sprintf("Failed to update user: %v", err), http.StatusInternalServerError)
+        return
     }
 
-    return &user, nil
+    // Respond with the updated user
+    w.Header().Set("Content-Type", "application/json")
+    json.NewEncoder(w).Encode(user)
 }
 
-// DeleteUser deletes a user by ID.
-func (s *UserService) DeleteUser(id int) error {
-    // Try to delete the user
+
+func (s *UserService) DeleteUser(w http.ResponseWriter, r *http.Request) {
+    id := mux.Vars(r)["id"]
+
     if err := s.db.Delete(&models.User{}, id).Error; err != nil {
-        return fmt.Errorf("failed to delete user with ID %d: %v", id, err)
+        http.Error(w, fmt.Sprintf("Failed to delete user with ID %s: %v", id, err), http.StatusInternalServerError)
+        return
     }
-    return nil
+
+    // Respond with a success message
+    w.Header().Set("Content-Type", "application/json")
+    w.WriteHeader(http.StatusOK)
+    json.NewEncoder(w).Encode(map[string]string{"message": "User deleted successfully"})
 }
 
